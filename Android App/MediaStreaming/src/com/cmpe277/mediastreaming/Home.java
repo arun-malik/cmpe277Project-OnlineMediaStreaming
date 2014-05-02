@@ -35,13 +35,15 @@ import android.widget.Toast;
  *
  */
 public class Home extends Activity {
-	
+
 	static final public String TAG = "MediaStreaming - HomeActivity";
 
-	private ImageButton btnLiveStream, btnUpload;
+	private ImageButton btnLiveStream, btnUpload, btnPlay;
 	private static final int SELECT_VIDEO = 3;
-	private String URL = "http://54.225.246.29:8080/RESTfulExample/rest/file/upload";
+	private String RestApiURL = "http://54.225.246.29:8080/RESTfulExample/rest/file/upload";
+	private String BrowseVideoURL = "http://54.225.246.29:8080/mediaFiles/";
 
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -49,6 +51,7 @@ public class Home extends Activity {
 
 		btnLiveStream = (ImageButton) findViewById(R.id.btnLiveStream);
 		btnUpload = (ImageButton) findViewById(R.id.btnUpload);
+		btnPlay = (ImageButton) findViewById(R.id.btnPlay);
 
 		btnLiveStream.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
@@ -58,6 +61,7 @@ public class Home extends Activity {
 					Intent intentLiveStream = new Intent(Home.this,MainActivity.class);
 					startActivity(intentLiveStream);
 				}
+				return;
 			}
 		});
 
@@ -71,7 +75,21 @@ public class Home extends Activity {
 					intent.setAction(Intent.ACTION_GET_CONTENT);
 					startActivityForResult(Intent.createChooser(intent,"Select a Video "), SELECT_VIDEO);
 				}
+				return;
+			}
+		});
 
+
+		btnPlay.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+
+				if(view == btnPlay)
+				{
+					Uri uri = Uri.parse(BrowseVideoURL);
+					Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+					startActivity(intent);
+				}
+				return;
 			}
 		});
 	}
@@ -79,8 +97,6 @@ public class Home extends Activity {
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode == RESULT_OK) {
 			if (requestCode == SELECT_VIDEO) {
-				//Uri selectedVideoUri = data.getData();
-				//String selectedPath = getPath(selectedVideoUri);
 				new uploadMedia().execute(getPath(data.getData()));
 			}      
 		}
@@ -93,7 +109,7 @@ public class Home extends Activity {
 			String mediaFilePath = params[0];
 
 			HttpClient httpClientObject = new DefaultHttpClient();
-			HttpPost httpPostCall = new HttpPost(URL);
+			HttpPost httpPostCall = new HttpPost(RestApiURL);
 			FileBody fileParamRequestBody = new FileBody(new File(mediaFilePath));			
 
 			MultipartEntity requestParamEntity = new MultipartEntity();
@@ -153,7 +169,7 @@ public class Home extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		
+
 		getMenuInflater().inflate(R.menu.home, menu);
 		return true;
 	}

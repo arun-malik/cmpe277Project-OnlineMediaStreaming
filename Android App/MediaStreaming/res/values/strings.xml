@@ -6,6 +6,7 @@
     <string name="title_activity_home">Media Streaming</string>
     <string name="txtLiveStream">Live Stream</string>
     <string name="txtUpload">Upload Video</string>
+    <string name="txtPlay">Play Video</string>
       
 
 </resources>
