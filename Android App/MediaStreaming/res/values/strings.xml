@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Media Streaming</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_home">Media Streaming</string>
+    <string name="txtLiveStream">Live Stream</string>
+    <string name="txtUpload">Upload Video</string>
+      
+
+</resources>
