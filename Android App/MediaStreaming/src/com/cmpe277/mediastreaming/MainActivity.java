@@ -17,17 +17,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
 	static final public String TAG = "MediaStreaming - MainActivity";
 
-	public final int HANDSET = 0x01;
-	public int device = HANDSET;
 	private SurfaceView mSurfaceView;
 	private SurfaceHolder mSurfaceHolder;
 	private AppRTSPServer mRtspServer;
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -43,9 +43,8 @@ public class MainActivity extends Activity {
 
 	public void onStart() {
 		super.onStart();
-
 		bindService(new Intent(this,AppRtspServer.class), mRtspServiceConnection, Context.BIND_AUTO_CREATE);
-
+		Log.d(TAG,"Bind and Start Service");
 	}
 
 	@Override
@@ -55,11 +54,14 @@ public class MainActivity extends Activity {
 		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
 		unbindService(mRtspServiceConnection);
 		finish();
+		
+		Log.d(TAG,"On Stop - Unbind & Stop Service");
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
+		Log.d(TAG,"On Resume");
 	}
 
 	@Override
@@ -69,11 +71,13 @@ public class MainActivity extends Activity {
 		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
 		unbindService(mRtspServiceConnection);
 		finish();
+		
+		Log.d(TAG,"on Pause");
 	}
 
 	@Override
 	public void onDestroy() {
-		Log.d(TAG,"SpydroidActivity destroyed");
+		Log.d(TAG,"Destroyed");
 		super.onDestroy();
 		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
 		unbindService(mRtspServiceConnection);
@@ -82,6 +86,7 @@ public class MainActivity extends Activity {
 
 	@Override    
 	public void onBackPressed() {
+		Log.d(TAG,"Back Button Pressed");
 		finish();
 	}
 	
@@ -99,10 +104,16 @@ public class MainActivity extends Activity {
 			mRtspServer = (AppRtspServer) ((AppRTSPServer.LocalBinder)service).getService();
 			mRtspServer.addCallbackListener(mRtspCallbackListener);
 			mRtspServer.start();
+			
+			Toast.makeText(getApplicationContext(),"Service Started", Toast.LENGTH_LONG).show();
+			Log.d(TAG,"Service Started");
 		}
 
 		@Override
-		public void onServiceDisconnected(ComponentName name) {}
+		public void onServiceDisconnected(ComponentName name) {
+			Toast.makeText(getApplicationContext(),"Service Disconnected", Toast.LENGTH_LONG).show();
+			Log.d(TAG,"Service Disconnected");
+		}
 
 	};
 
@@ -110,68 +121,16 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void onError(AppRTSPServer server, Exception e, int error) {
-			// TODO Auto-generated method stub
-			
+			Toast.makeText(getApplicationContext(),"Exception. Please read Log file for more details", Toast.LENGTH_LONG).show();
+			Log.d(TAG,"Callback Error");
 		}
 
 		@Override
 		public void onMessage(AppRTSPServer server, int message) {
-			// TODO Auto-generated method stub
+			Log.d(TAG,"Callback on Message received");
 			
 		}
 
 
 	};	
-
-//	private ServiceConnection mHttpServiceConnection = new ServiceConnection() {
-//
-//		@Override
-//		public void onServiceConnected(ComponentName name, IBinder service) {
-//			mHttpServer = (CustomHttpServer) ((TinyHttpServer.LocalBinder)service).getService();
-//			mHttpServer.addCallbackListener(mHttpCallbackListener);
-//			mHttpServer.start();
-//		}
-//
-//		@Override
-//		public void onServiceDisconnected(ComponentName name) {}
-//
-//	};
-
-//	private TinyHttpServer.CallbackListener mHttpCallbackListener = new TinyHttpServer.CallbackListener() {
-//
-//		@Override
-//		public void onError(TinyHttpServer server, Exception e, int error) {
-//			// We alert the user that the port is already used by another app.
-//			if (error == TinyHttpServer.ERROR_HTTP_BIND_FAILED ||
-//					error == TinyHttpServer.ERROR_HTTPS_BIND_FAILED) {
-//				String str = error==TinyHttpServer.ERROR_HTTP_BIND_FAILED?"HTTP":"HTTPS";
-//				new AlertDialog.Builder(SpydroidActivity.this)
-//				.setTitle(R.string.port_used)
-//				.setMessage(getString(R.string.bind_failed, str))
-//				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//					public void onClick(final DialogInterface dialog, final int id) {
-//						startActivityForResult(new Intent(SpydroidActivity.this, OptionsActivity.class),0);
-//					}
-//				})
-//				.show();
-//			}
-//		}
-//
-//		@Override
-//		public void onMessage(TinyHttpServer server, int message) {
-//			if (message==CustomHttpServer.MESSAGE_STREAMING_STARTED) {
-//				if (mAdapter != null && mAdapter.getHandsetFragment() != null) 
-//					mAdapter.getHandsetFragment().update();
-//				if (mAdapter != null && mAdapter.getPreviewFragment() != null)	
-//					mAdapter.getPreviewFragment().update();
-//			} else if (message==CustomHttpServer.MESSAGE_STREAMING_STOPPED) {
-//				if (mAdapter != null && mAdapter.getHandsetFragment() != null) 
-//					mAdapter.getHandsetFragment().update();
-//				if (mAdapter != null && mAdapter.getPreviewFragment() != null)	
-//					mAdapter.getPreviewFragment().update();
-//			}
-//		}
-//
-//	};
-
 }

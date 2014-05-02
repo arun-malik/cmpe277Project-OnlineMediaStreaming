@@ -28,37 +28,26 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public class AppRTSPServer extends Service {
 
-	public final static String TAG = "RtspServer";
+	public final static String TAG = "AppRTSPServer";
 
-	/** The server name that will appear in responses. */
-	public static String SERVER_NAME = "MajorKernelPanic RTSP Server";
+	public static String SERVER_NAME = "CMPE277MobileMediaServer";
 
-	/** Port used by default. */
 	public static final int DEFAULT_RTSP_PORT = 8086;
 
-	/** Port already in use. */
 	public final static int ERROR_BIND_FAILED = 0x00;
-
-	/** A stream could not be started. */
 	public final static int ERROR_START_FAILED = 0x01;
-
-	/** Streaming started. */
 	public final static int MESSAGE_STREAMING_STARTED = 0X00;
-
-	/** Streaming stopped. */
 	public final static int MESSAGE_STREAMING_STOPPED = 0X01;
-
-	/** Key used in the SharedPreferences to store whether the RTSP server is enabled or not. */
 	public final static String KEY_ENABLED = "rtsp_enabled";
-
-	/** Key used in the SharedPreferences for the port used by the RTSP server. */
 	public final static String KEY_PORT = "rtsp_port";
 
 	protected SessionBuilder mSessionBuilder;
 	protected SharedPreferences mSharedPreferences;
+
 	public static boolean mEnabled = true;	
 	protected int mPort = DEFAULT_RTSP_PORT;
 	protected WeakHashMap<Session,Object> mSessions = new WeakHashMap<Session,Object>(2);
@@ -72,21 +61,12 @@ public class AppRTSPServer extends Service {
 	public AppRTSPServer() {
 	}
 
-	/** Be careful: those callbacks won't necessarily be called from the ui thread ! */
 	public interface CallbackListener {
-
-		/** Called when an error occurs. */
 		void onError(AppRTSPServer server, Exception e, int error);
-
-		/** Called when streaming starts/stops. */
 		void onMessage(AppRTSPServer server, int message);
-
 	}
 
-	/**
-	 * See {@link RtspServer.CallbackListener} to check out what events will be fired once you set up a listener.
-	 * @param listener The listener
-	 */
+
 	public void addCallbackListener(CallbackListener listener) {
 		synchronized (mListeners) {
 			if (mListeners.size() > 0) {
@@ -98,35 +78,22 @@ public class AppRTSPServer extends Service {
 		}
 	}
 
-	/**
-	 * Removes the listener.
-	 * @param listener The listener
-	 */
 	public void removeCallbackListener(CallbackListener listener) {
 		synchronized (mListeners) {
 			mListeners.remove(listener);				
 		}
 	}
 
-	/** Returns the port used by the RTSP server. */	
 	public int getPort() {
 		return mPort;
 	}
 
-	/**
-	 * Sets the port for the RTSP server to use.
-	 * @param port The port
-	 */
 	public void setPort(int port) {
 		Editor editor = mSharedPreferences.edit();
 		editor.putString(KEY_PORT, String.valueOf(port));
 		editor.commit();
 	}	
 
-	/** 
-	 * Starts (or restart if needed, if for example the configuration 
-	 * of the server has been modified) the RTSP server. 
-	 */
 	public void start() {
 		if (!mEnabled || mRestart) stop();
 		if (mEnabled && mListenerThread == null) {
@@ -139,10 +106,6 @@ public class AppRTSPServer extends Service {
 		mRestart = false;
 	}
 
-	/** 
-	 * Stops the RTSP server but not the Android Service. 
-	 * To stop the Android Service you need to call {@link android.content.Context#stopService(Intent)}; 
-	 */
 	public void stop() {
 		if (mListenerThread != null) {
 			try {
@@ -159,7 +122,6 @@ public class AppRTSPServer extends Service {
 		}
 	}
 
-	/** Returns whether or not the RTSP server is streaming to some client(s). */
 	public boolean isStreaming() {
 		for ( Session session : mSessions.keySet() ) {
 			if ( session != null ) {
@@ -173,7 +135,6 @@ public class AppRTSPServer extends Service {
 		return mEnabled;
 	}
 
-	/** Returns the bandwidth consumed by the RTSP server in bits per second. */
 	public long getBitrate() {
 		long bitrate = 0;
 		for ( Session session : mSessions.keySet() ) {
@@ -192,12 +153,9 @@ public class AppRTSPServer extends Service {
 	@Override
 	public void onCreate() {
 
-		// Let's restore the state of the service 
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		mPort = Integer.parseInt(mSharedPreferences.getString(KEY_PORT, String.valueOf(mPort)));
 		mEnabled = mSharedPreferences.getBoolean(KEY_ENABLED, mEnabled);
-
-		// If the configuration is modified, the server will adjust
 		mSharedPreferences.registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
 
 		start();
@@ -228,7 +186,6 @@ public class AppRTSPServer extends Service {
 		}
 	};
 
-	/** The Binder you obtain when a connection with the Service is established. */
 	public class LocalBinder extends Binder {
 		public AppRTSPServer getService() {
 			return AppRTSPServer.this;
@@ -260,13 +217,6 @@ public class AppRTSPServer extends Service {
 		}
 	}
 
-	/** 
-	 * By default the RTSP uses {@link UriParser} to parse the URI requested by the client
-	 * but you can change that behavior by override this method.
-	 * @param uri The uri that the client has requested
-	 * @param client The socket associated to the client
-	 * @return A proper session
-	 */
 	protected Session handleRequest(String uri, Socket client) throws IllegalStateException, IOException {
 		Session session = UriParser.parse(uri);
 		session.setOrigin(client.getLocalAddress());
@@ -277,7 +227,6 @@ public class AppRTSPServer extends Service {
 	}
 
 	class RequestListener extends Thread implements Runnable {
-
 		private final ServerSocket mServer;
 
 		public RequestListener() throws IOException {
@@ -285,7 +234,7 @@ public class AppRTSPServer extends Service {
 				mServer = new ServerSocket(mPort);
 				start();
 			} catch (BindException e) {
-				Log.e(TAG,"Port already in use !");
+				Log.e(TAG,"Port already in use.");
 				postError(e, ERROR_BIND_FAILED);
 				throw e;
 			}
@@ -293,6 +242,8 @@ public class AppRTSPServer extends Service {
 
 		public void run() {
 			Log.i(TAG,"RTSP server listening on port "+mServer.getLocalPort());
+			Toast.makeText(getApplicationContext(),"RTSP server listening on port "+mServer.getLocalPort(), Toast.LENGTH_LONG).show();
+			
 			while (!Thread.interrupted()) {
 				try {
 					new WorkerThread(mServer.accept()).start();
