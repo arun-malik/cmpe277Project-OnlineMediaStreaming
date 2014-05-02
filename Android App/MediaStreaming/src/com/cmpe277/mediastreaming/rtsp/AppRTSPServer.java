@@ -242,8 +242,8 @@ public class AppRTSPServer extends Service {
 
 		public void run() {
 			Log.i(TAG,"RTSP server listening on port "+mServer.getLocalPort());
-			Toast.makeText(getApplicationContext(),"RTSP server listening on port "+mServer.getLocalPort(), Toast.LENGTH_LONG).show();
 			
+
 			while (!Thread.interrupted()) {
 				try {
 					new WorkerThread(mServer.accept()).start();

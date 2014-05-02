@@ -1,5 +1,12 @@
 package com.cmpe277.mediastreaming;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.http.conn.util.InetAddressUtils;
+
 import com.cmpe277.mediastreaming.api.AppRtspServer;
 import com.cmpe277.mediastreaming.rtsp.AppRTSPServer;
 import com.cmpe277.mediastreaming.utility.SessionBuilder;
@@ -17,6 +24,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -26,6 +34,7 @@ public class MainActivity extends Activity {
 	private SurfaceView mSurfaceView;
 	private SurfaceHolder mSurfaceHolder;
 	private AppRTSPServer mRtspServer;
+	private TextView streamingURL;
 	
 	@SuppressWarnings("deprecation")
 	@Override
@@ -37,6 +46,9 @@ public class MainActivity extends Activity {
 			mSurfaceHolder = mSurfaceView.getHolder();
 			mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 			SessionBuilder.getInstance().setSurfaceHolder(mSurfaceHolder);
+			streamingURL = (TextView) findViewById(R.id.txtURLDisplay);
+			
+			streamingURL.setText("Video will be streamed on following URL:\n rtsp://"+ getIPAddress(true) + ":8086");
 			
 			this.startService(new Intent(this,AppRtspServer.class));
 	}
@@ -51,9 +63,9 @@ public class MainActivity extends Activity {
 	public void onStop() {
 		super.onStop();
 	
-		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
-		unbindService(mRtspServiceConnection);
-		finish();
+//		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
+//		unbindService(mRtspServiceConnection);
+//		finish();
 		
 		Log.d(TAG,"On Stop - Unbind & Stop Service");
 	}
@@ -68,9 +80,9 @@ public class MainActivity extends Activity {
 	public void onPause() {
 		super.onPause();
 		
-		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
-		unbindService(mRtspServiceConnection);
-		finish();
+//		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
+//		unbindService(mRtspServiceConnection);
+//		finish();
 		
 		Log.d(TAG,"on Pause");
 	}
@@ -79,9 +91,9 @@ public class MainActivity extends Activity {
 	public void onDestroy() {
 		Log.d(TAG,"Destroyed");
 		super.onDestroy();
-		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
-		unbindService(mRtspServiceConnection);
-		finish();
+//		if (mRtspServer != null) mRtspServer.removeCallbackListener(mRtspCallbackListener);
+//		unbindService(mRtspServiceConnection);
+//		finish();
 	}
 
 	@Override    
@@ -132,5 +144,31 @@ public class MainActivity extends Activity {
 		}
 
 
-	};	
+	};
+	
+	public static String getIPAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress().toUpperCase();
+                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr); 
+                        if (useIPv4) {
+                            if (isIPv4) 
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
+                                return delim<0 ? sAddr : sAddr.substring(0, delim);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) { } // for now eat exceptions
+        return "";
+    }
+
 }
